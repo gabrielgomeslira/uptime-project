@@ -1,0 +1,439 @@
+/* Variáveis globais */
+:root {
+  --background: #f2f7f5;
+  --headline: #00473e;
+  --paragraph: #475d5b;
+  --button: #faae2b;
+  --button-text: #00473e;
+  --stroke: #00332c;
+  --main: #f2f7f5;
+  
+  --success: #2ecc71;
+  --warning: #faae2b;
+  --danger: #e74c3c;
+  --dark: #00332c;
+  --light: #f2f7f5;
+  --gray: #8b9a99;
+  
+  --card-bg: #ffffff;
+  --text-color: #00473e;
+  --border-color: #d0e0dc;
+  --navbar-bg: #00473e;
+  --navbar-text: #f2f7f5;
+  --card-shadow: rgba(0, 0, 0, 0.05);
+  --hover-bg: #f8faf9;
+}
+
+/* Estilos gerais */
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--background);
+  color: var(--paragraph);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.footer {
+  margin-top: auto;
+  background-color: var(--navbar-bg);
+  color: var(--navbar-text);
+  padding: 1.5rem 0;
+}
+
+.navbar {
+  background-color: var(--navbar-bg) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand, .nav-link, .navbar-text {
+  color: var(--navbar-text) !important;
+}
+
+/* Estilos para os cartões de status */
+.card {
+  background-color: var(--card-bg);
+  border-color: var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px var(--card-shadow);
+  transition: transform 0.2s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+  margin-bottom: 1rem;
+}
+
+.card-header {
+  background-color: rgba(0, 71, 62, 0.05);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.card-title {
+  color: var(--headline);
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 15px var(--card-shadow);
+}
+
+.border-success {
+  border-left: 4px solid var(--success) !important;
+}
+
+.border-danger {
+  border-left: 4px solid var(--danger) !important;
+}
+
+.border-warning {
+  border-left: 4px solid var(--warning) !important;
+}
+
+.border-primary {
+  border-left: 4px solid var(--button) !important;
+}
+
+/* Estilos para os status badges */
+.badge.bg-success, .badge.bg-danger, .badge.bg-warning, .badge.bg-secondary {
+  font-size: 0.8rem;
+  padding: 0.35em 0.65em;
+  border-radius: 12px;
+}
+
+.badge.bg-primary {
+  background-color: var(--button) !important;
+  color: var(--button-text) !important;
+}
+
+.badge.bg-success {
+  background-color: var(--success) !important;
+}
+
+.badge.bg-danger {
+  background-color: var(--danger) !important;
+}
+
+.badge.bg-warning {
+  background-color: var(--warning) !important;
+  color: var(--button-text) !important;
+}
+
+/* Estilos para o gráfico */
+.chart-container {
+  position: relative;
+  height: 250px;
+  margin-top: 1rem;
+  background-color: var(--card-bg);
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 4px var(--card-shadow);
+}
+
+/* Classes de utilidade */
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* Status de monitores */
+.status-up {
+  color: var(--success);
+}
+
+.status-down {
+  color: var(--danger);
+}
+
+.status-paused {
+  color: var(--warning);
+}
+
+.status-unknown {
+  color: var(--gray);
+}
+
+/* Estilos para texto e cabeçalhos */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--headline);
+}
+
+p {
+  color: var(--paragraph);
+}
+
+/* Estilos responsivos para tabelas */
+@media (max-width: 768px) {
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+  
+  .btn-sm {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* Estilos para notificações */
+.toast-container {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 1050;
+}
+
+.toast {
+  background-color: var(--card-bg);
+  box-shadow: 0 0.25rem 0.75rem var(--card-shadow);
+  border-radius: 8px;
+}
+
+/* Animações */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s infinite;
+}
+
+/* Transições de página */
+.page-transition {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Ícones de status */
+.status-icon {
+  font-size: 1.2rem;
+  margin-right: 0.25rem;
+}
+
+/* Estilos para a página inicial */
+.home-section {
+  padding: 4rem 0;
+}
+
+.lead {
+  color: var(--paragraph);
+}
+
+/* Estilos para modais */
+.modal-content {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  background-color: var(--card-bg);
+}
+
+.modal-header {
+  background-color: var(--navbar-bg);
+  color: var(--navbar-text);
+  border-bottom: none;
+}
+
+.modal-footer {
+  border-top: none;
+}
+
+.incidents-panel {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
+.incident-item {
+  padding: 12px;
+  border-left: 4px solid var(--danger);
+  margin-bottom: 12px;
+  background-color: var(--card-bg);
+  border-radius: 8px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 5px var(--card-shadow);
+  position: relative;
+}
+
+.incident-item:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 8px var(--card-shadow);
+}
+
+.incident-item.resolved {
+  border-left-color: var(--success);
+}
+
+.incident-time {
+  font-size: 0.8rem;
+  color: var(--gray);
+}
+
+.incident-actions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.mark-read-btn {
+  color: var(--gray);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.mark-read-btn:hover {
+  color: var(--button);
+}
+
+/* Estilo para tabelas */
+.table {
+  background-color: var(--card-bg);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table th {
+  background-color: rgba(0, 71, 62, 0.05);
+  border-bottom-width: 1px;
+  color: var(--headline);
+}
+
+.table td {
+  color: var(--paragraph);
+}
+
+.table tr {
+  border-bottom-color: var(--border-color);
+}
+
+.btn-group .btn {
+  border-radius: 6px;
+  margin-right: 2px;
+}
+
+/* Estilos para botões */
+.btn-primary {
+  background-color: var(--button);
+  border-color: var(--button);
+  color: var(--button-text);
+}
+
+.btn-primary:hover, .btn-primary:focus {
+  background-color: #e79e1a;
+  border-color: #e79e1a;
+  color: var(--button-text);
+}
+
+.btn-outline-primary {
+  border-color: var(--button);
+  color: var(--button-text);
+}
+
+.btn-outline-primary:hover, .btn-outline-primary:focus {
+  background-color: var(--button);
+  color: var(--button-text);
+}
+
+.btn-success {
+  background-color: var(--success);
+  border-color: var(--success);
+}
+
+.btn-danger {
+  background-color: var(--danger);
+  border-color: var(--danger);
+}
+
+.btn-warning {
+  background-color: var(--warning);
+  border-color: var(--warning);
+  color: var(--button-text);
+}
+
+.btn-outline-light {
+  color: var(--navbar-text);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: var(--navbar-text);
+  color: var(--navbar-text);
+}
+
+/* Estilo para links */
+a {
+  color: var(--button);
+  text-decoration: none;
+}
+
+a:hover {
+  color: #e79e1a;
+}
+
+/* Dashboard widgets */
+.stats-widget {
+  background-color: var(--card-bg);
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 4px 6px var(--card-shadow);
+  transition: transform 0.2s ease;
+  height: 100%;
+}
+
+.stats-widget:hover {
+  transform: translateY(-5px);
+}
+
+.stats-widget .value {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin: 0.5rem 0;
+}
+
+.stats-widget .label {
+  color: var(--paragraph);
+  font-size: 0.9rem;
+}
+
+.stats-widget.primary {
+  border-top: 4px solid var(--button);
+}
+
+.stats-widget.success {
+  border-top: 4px solid var(--success);
+}
+
+.stats-widget.danger {
+  border-top: 4px solid var(--danger);
+}
+
+.stats-widget.warning {
+  border-top: 4px solid var(--warning);
+}
+
+.bg-card {
+  background-color: var(--card-bg);
+}
+
+/* Display Text */
+.display-4, .display-5 {
+  color: var(--headline);
+}
+
+/* Animações para aparecimento/desaparecimento de elementos */
+@keyframes fadeOut {
+  from { opacity: 1; background-color: rgba(231, 76, 60, 0.2); }
+  to { opacity: 0; }
+}
+
+.fade-out {
+  animation: fadeOut 0.5s ease-out forwards;
+} 
