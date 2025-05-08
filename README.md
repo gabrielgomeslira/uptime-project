@@ -24,7 +24,7 @@ Aplicação de monitoramento de uptime para HTTP, TCP e Ping, desenvolvida com N
 
 1. Clone o repositório:
    ```sh
-   git clone https://seu-repositorio/uptime-monitor.git
+   git clone https://github.com/gabrielgomeslira/uptime-project/
    cd uptime-monitor
    ```
 
@@ -42,7 +42,7 @@ Aplicação de monitoramento de uptime para HTTP, TCP e Ping, desenvolvida com N
 
 1. Clone o repositório:
    ```sh
-   git clone https://seu-repositorio/uptime-monitor.git
+   git clone https://github.com/gabrielgomeslira/uptime-project/
    cd uptime-monitor
    ```
 
