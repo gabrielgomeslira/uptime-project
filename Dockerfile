@@ -1,31 +1,25 @@
 FROM node:18-alpine
 
-# Diretório de trabalho
+# Set working directory
 WORKDIR /app
 
-# Copiar arquivos de dependências
+# Copy package files
 COPY package*.json ./
 
-# Instalar dependências para compilação
-RUN apk add --no-cache --virtual .gyp python3 make g++
+# Install dependencies efficiently
+RUN apk add --no-cache --virtual .gyp python3 make g++ && \
+    npm install && \
+    npm install -g nodemon && \
+    apk del .gyp
 
-# Instalar dependências
-RUN npm install
-
-# Copiar código fonte
+# Copy source code
 COPY . .
 
-# Recompile bcrypt após copiar o código fonte
-RUN npm rebuild bcrypt --build-from-source
-
-# Criar diretórios necessários para volumes, se não existirem
+# Create necessary directories for volumes
 RUN mkdir -p src public
 
-# Limpar cache e dependências de compilação
-RUN apk del .gyp
-
-# Porta de exposição
+# Expose port
 EXPOSE 3000
 
-# Comando para iniciar a aplicação
+# Start application
 CMD ["npm", "start"] 
