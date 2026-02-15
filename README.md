@@ -13,6 +13,12 @@ Aplicação de monitoramento de uptime para HTTP, TCP e Ping, desenvolvida com N
 - Sistema de autenticação de usuários
 - Interface web moderna e responsiva
 
+## Screenshots
+
+![Dashboard](docs/images/screenshot-1.png)
+![Monitoramento](docs/images/screenshot-2.png)
+![Detalhes](docs/images/screenshot-3.png)
+
 ## Requisitos
 
 - Docker e Docker Compose **(recomendado)**
@@ -81,4 +87,5 @@ Para desenvolvimento, utilize o modo de hot reload:
 ```sh
 npm run dev
 ```
+
 ---
