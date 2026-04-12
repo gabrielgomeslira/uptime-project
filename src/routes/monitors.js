@@ -91,8 +91,10 @@ router.post('/', isAuthenticated, async (req, res) => {
     });
     
     
-    monitoringService.checkMonitor(monitor);
-    
+    Promise.resolve()
+      .then(() => monitoringService.checkMonitor(monitor))
+      .catch((err) => log('ERROR', `Initial checkMonitor failed for id=${monitor.id}`, err));
+
     res.status(201).json(monitor);
   } catch (error) {
     log('ERROR', `Route error: ${error.message}`, error);

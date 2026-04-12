@@ -50,18 +50,42 @@ async function checkHttp(monitor) {
   return result;
 }
 
+function parseTcpHost(rawUrl) {
+  if (!rawUrl) return null;
+  const input = String(rawUrl).trim();
+  try {
+    const u = new URL(input);
+    return u.hostname;
+  } catch (_) {}
+  try {
+    const u = new URL(`tcp://${input}`);
+    return u.hostname;
+  } catch (_) {}
+  return input.replace(/^\/+|\/+$/g, '').split('/')[0].split(':')[0] || null;
+}
+
 async function checkTcp(monitor) {
   const startTime = Date.now();
   let result = { isUp: false, responseTime: 0, error: null };
 
   return new Promise((resolve) => {
+    const host = parseTcpHost(monitor.url);
+    const port = Number(monitor.port);
+
+    if (!host || !Number.isInteger(port) || port < 1 || port > 65535) {
+      result.error = `Invalid TCP target (host="${host}", port="${monitor.port}")`;
+      log('WARN', `TCP config invalid for ${monitor.name}: ${result.error}`);
+      resolve(result);
+      return;
+    }
+
     const socket = new net.Socket();
     socket.setTimeout(monitor.timeout * 1000);
 
     socket.on('connect', () => {
       result.responseTime = Date.now() - startTime;
       result.isUp = true;
-      log('DEBUG', `TCP connected ${monitor.name} in ${result.responseTime}ms`);
+      log('DEBUG', `TCP connected ${monitor.name} (${host}:${port}) in ${result.responseTime}ms`);
       socket.destroy();
       resolve(result);
     });
@@ -69,7 +93,7 @@ async function checkTcp(monitor) {
     socket.on('timeout', () => {
       result.responseTime = Date.now() - startTime;
       result.error = 'Connection timeout';
-      log('WARN', `TCP timeout ${monitor.name}`);
+      log('WARN', `TCP timeout ${monitor.name} (${host}:${port})`);
       socket.destroy();
       resolve(result);
     });
@@ -77,13 +101,20 @@ async function checkTcp(monitor) {
     socket.on('error', (error) => {
       result.responseTime = Date.now() - startTime;
       result.error = error.message;
-      log('WARN', `TCP error ${monitor.name}: ${error.message}`);
+      log('WARN', `TCP error ${monitor.name} (${host}:${port}): ${error.message}`);
       socket.destroy();
       resolve(result);
     });
 
-    const urlParts = new URL(monitor.url);
-    socket.connect(monitor.port, urlParts.hostname);
+    try {
+      socket.connect(port, host);
+    } catch (error) {
+      result.responseTime = Date.now() - startTime;
+      result.error = error.message;
+      log('ERROR', `TCP connect threw for ${monitor.name}: ${error.message}`);
+      socket.destroy();
+      resolve(result);
+    }
   });
 }
 
