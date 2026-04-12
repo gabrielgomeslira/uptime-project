@@ -2,6 +2,16 @@
 const User = require('../models/User');
 const router = express.Router();
 
+const log = (level, msg, extra) => {
+  const ts = new Date().toISOString();
+  const line = `[${ts}] [${level}] [routes/auth] ${msg}`;
+  if (extra !== undefined) {
+    console[level === 'ERROR' ? 'error' : 'log'](line, extra);
+  } else {
+    console[level === 'ERROR' ? 'error' : 'log'](line);
+  }
+};
+
 const isAuthenticated = (req, res, next) => {
   if (req.session && req.session.userId) {
     return next();
@@ -39,6 +49,7 @@ router.post('/register', async (req, res) => {
       }
     });
   } catch (error) {
+    log('ERROR', `Route error: ${error.message}`, error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -72,6 +83,7 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (error) {
+    log('ERROR', `Route error: ${error.message}`, error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -97,6 +109,7 @@ router.get('/me', isAuthenticated, async (req, res) => {
     
     res.json(user);
   } catch (error) {
+    log('ERROR', `Route error: ${error.message}`, error);
     res.status(500).json({ error: error.message });
   }
 });

@@ -1,10 +1,20 @@
-﻿const axios = require('axios');
+const axios = require('axios');
 const ping = require('ping');
 const net = require('net');
 const { CronJob } = require('cron');
 const { Monitor, MonitorHistory } = require('../models/Monitor');
 const { Op } = require('sequelize');
 const sequelize = require('../config/database');
+
+const log = (level, msg, extra) => {
+  const ts = new Date().toISOString();
+  const line = `[${ts}] [${level}] [monitoringService] ${msg}`;
+  if (extra !== undefined) {
+    console[level === 'ERROR' ? 'error' : 'log'](line, extra);
+  } else {
+    console[level === 'ERROR' ? 'error' : 'log'](line);
+  }
+};
 
 let io;
 let monitorCache = {};
@@ -14,6 +24,7 @@ async function checkHttp(monitor) {
   let result = { isUp: false, responseTime: 0, error: null, statusCode: null };
 
   try {
+    log('DEBUG', `HTTP check -> ${monitor.name} (${monitor.url})`);
     const response = await axios({
       method: 'get',
       url: monitor.url,
@@ -23,16 +34,17 @@ async function checkHttp(monitor) {
 
     result.responseTime = Date.now() - startTime;
     result.statusCode = response.status;
-    
-    
+
     if (monitor.expectedStatusCode) {
       result.isUp = response.status === monitor.expectedStatusCode;
     } else {
       result.isUp = response.status >= 200 && response.status < 400;
     }
+    log('DEBUG', `HTTP result ${monitor.name}: status=${result.statusCode} isUp=${result.isUp} rt=${result.responseTime}ms`);
   } catch (error) {
     result.responseTime = Date.now() - startTime;
     result.error = error.message;
+    log('WARN', `HTTP check failed for ${monitor.name}: ${error.message}`);
   }
 
   return result;
@@ -49,6 +61,7 @@ async function checkTcp(monitor) {
     socket.on('connect', () => {
       result.responseTime = Date.now() - startTime;
       result.isUp = true;
+      log('DEBUG', `TCP connected ${monitor.name} in ${result.responseTime}ms`);
       socket.destroy();
       resolve(result);
     });
@@ -56,6 +69,7 @@ async function checkTcp(monitor) {
     socket.on('timeout', () => {
       result.responseTime = Date.now() - startTime;
       result.error = 'Connection timeout';
+      log('WARN', `TCP timeout ${monitor.name}`);
       socket.destroy();
       resolve(result);
     });
@@ -63,6 +77,7 @@ async function checkTcp(monitor) {
     socket.on('error', (error) => {
       result.responseTime = Date.now() - startTime;
       result.error = error.message;
+      log('WARN', `TCP error ${monitor.name}: ${error.message}`);
       socket.destroy();
       resolve(result);
     });
@@ -79,6 +94,7 @@ async function checkPing(monitor) {
   try {
     const urlParts = new URL(monitor.url);
     const host = urlParts.hostname;
+    log('DEBUG', `Ping -> ${monitor.name} (${host})`);
     const pingResult = await ping.promise.probe(host, {
       timeout: monitor.timeout
     });
@@ -87,10 +103,12 @@ async function checkPing(monitor) {
     result.isUp = pingResult.alive;
     if (!pingResult.alive) {
       result.error = 'Host unreachable';
+      log('WARN', `Ping unreachable ${monitor.name} (${host})`);
     }
   } catch (error) {
     result.responseTime = Date.now() - startTime;
     result.error = error.message;
+    log('ERROR', `Ping error ${monitor.name}: ${error.message}`);
   }
 
   return result;
@@ -106,20 +124,23 @@ async function updateMonitorCache() {
         order: [['createdAt', 'DESC']]
       }]
     });
-    
-    
+
     monitors.forEach(monitor => {
       monitorCache[monitor.id] = monitor;
     });
-    
+
+    log('DEBUG', `Monitor cache updated (${monitors.length} monitors)`);
     return monitors;
   } catch (error) {
+    log('ERROR', 'Failed to update monitor cache', error);
     return [];
   }
 }
 
 async function checkMonitor(monitor) {
   let result;
+
+  log('INFO', `Checking monitor id=${monitor.id} name="${monitor.name}" type=${monitor.type}`);
 
   switch (monitor.type) {
     case 'http':
@@ -133,15 +154,14 @@ async function checkMonitor(monitor) {
       result = await checkPing(monitor);
       break;
     default:
-      result = { isUp: false, error: 'Tipo de monitor nÃ£o suportado' };
+      result = { isUp: false, error: 'Tipo de monitor não suportado' };
+      log('WARN', `Unsupported monitor type: ${monitor.type}`);
   }
 
   try {
-    
     const transaction = await sequelize.transaction();
 
     try {
-      
       await MonitorHistory.create({
         monitorId: monitor.id,
         isUp: result.isUp,
@@ -150,26 +170,23 @@ async function checkMonitor(monitor) {
         error: result.error
       }, { transaction });
 
-      
       const historyCount = await MonitorHistory.count({
         where: { monitorId: monitor.id }
       }, { transaction });
 
       const upCount = await MonitorHistory.count({
-        where: { 
+        where: {
           monitorId: monitor.id,
           isUp: true
         }
       }, { transaction });
 
-      const uptimePercentage = historyCount > 0 ? 
-        (upCount / historyCount * 100) : 
+      const uptimePercentage = historyCount > 0 ?
+        (upCount / historyCount * 100) :
         (result.isUp ? 100 : 0);
 
-      
       const statusChanged = monitor.isUp !== null && monitor.isUp !== result.isUp;
 
-      
       await monitor.update({
         lastChecked: new Date(),
         isUp: result.isUp,
@@ -177,10 +194,8 @@ async function checkMonitor(monitor) {
         uptime: uptimePercentage
       }, { transaction });
 
-      
       await transaction.commit();
 
-      
       const updatedMonitor = await Monitor.findByPk(monitor.id, {
         include: [{
           model: MonitorHistory,
@@ -189,28 +204,23 @@ async function checkMonitor(monitor) {
           order: [['createdAt', 'DESC']]
         }]
       });
-      
-      
+
       monitorCache[monitor.id] = updatedMonitor;
 
-      
-      if (io) {
-        
-        if (io.engine.clientsCount > 0) {
-          io.emit('monitor-update', {
-            id: monitor.id,
-            status: result.isUp,
-            responseTime: result.responseTime,
-            lastChecked: new Date(),
-            statusCode: result.statusCode,
-            error: result.error,
-            statusChanged
-          });
-        }
+      if (io && io.engine.clientsCount > 0) {
+        io.emit('monitor-update', {
+          id: monitor.id,
+          status: result.isUp,
+          responseTime: result.responseTime,
+          lastChecked: new Date(),
+          statusCode: result.statusCode,
+          error: result.error,
+          statusChanged
+        });
       }
 
       if (statusChanged) {
-        
+        log('INFO', `Status CHANGED for "${monitor.name}" -> ${result.isUp ? 'UP' : 'DOWN'}`);
         if (io && io.engine.clientsCount > 0) {
           io.emit('status-changed', {
             id: monitor.id,
@@ -227,28 +237,28 @@ async function checkMonitor(monitor) {
 
       return { monitor: updatedMonitor, result };
     } catch (error) {
-      
       await transaction.rollback();
+      log('ERROR', `Transaction rolled back for monitor ${monitor.id}`, error);
       throw error;
     }
   } catch (error) {
+    log('ERROR', `checkMonitor failed for id=${monitor.id}`, error);
     return { error };
   }
 }
 
 async function checkAllMonitors() {
   try {
-    const monitors = await Monitor.findAll({ 
-      where: { active: true }
-    });
-    
+    const monitors = await Monitor.findAll({ where: { active: true } });
+    log('INFO', `checkAllMonitors: ${monitors.length} active monitor(s)`);
+
     for (const monitor of monitors) {
       await checkMonitor(monitor);
     }
-    
-    
+
     await updateMonitorCache();
   } catch (error) {
+    log('ERROR', 'checkAllMonitors failed', error);
   }
 }
 
@@ -257,19 +267,22 @@ let monitoringJob = null;
 function startMonitoring() {
   try {
     if (monitoringJob) {
+      log('INFO', 'Restarting monitoring cron job');
       monitoringJob.stop();
     }
 
-    
     monitoringJob = new CronJob('* * * * *', async () => {
       try {
         await checkAllMonitors();
       } catch (error) {
+        log('ERROR', 'Cron tick failed', error);
       }
     }, null, true);
-    
+
+    log('INFO', 'Monitoring cron started (every minute)');
     updateMonitorCache();
   } catch (error) {
+    log('ERROR', 'Failed to start monitoring', error);
   }
 }
 
@@ -277,6 +290,7 @@ function stopMonitoring() {
   if (monitoringJob) {
     monitoringJob.stop();
     monitoringJob = null;
+    log('INFO', 'Monitoring cron stopped');
   }
 }
 
@@ -289,25 +303,26 @@ function getAllMonitorsFromCache() {
 }
 
 function init(socketIo) {
-  
   io = socketIo;
-  
-  
+
   io.on('connection', (socket) => {
+    log('DEBUG', `monitoringService: client connected ${socket.id}`);
     socket.emit('monitor-cache', getAllMonitorsFromCache());
-    
+
     socket.on('request-monitor-data', (id) => {
       const monitor = getMonitorFromCache(id);
       if (monitor) {
         socket.emit('monitor-data', monitor);
+      } else {
+        log('WARN', `request-monitor-data: id=${id} not in cache`);
       }
     });
-    
-    socket.on('disconnect', () => {
+
+    socket.on('disconnect', (reason) => {
+      log('DEBUG', `monitoringService: client disconnected ${socket.id} (${reason})`);
     });
   });
-  
-  
+
   startMonitoring();
 }
 
@@ -320,6 +335,4 @@ module.exports = {
   getMonitorFromCache,
   getAllMonitorsFromCache,
   updateMonitorCache
-}; 
-
-
+};

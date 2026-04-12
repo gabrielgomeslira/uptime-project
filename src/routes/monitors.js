@@ -3,6 +3,16 @@ const { Monitor, MonitorHistory } = require('../models/Monitor');
 const monitoringService = require('../services/monitoringService');
 const router = express.Router();
 
+const log = (level, msg, extra) => {
+  const ts = new Date().toISOString();
+  const line = `[${ts}] [${level}] [routes/monitors] ${msg}`;
+  if (extra !== undefined) {
+    console[level === 'ERROR' ? 'error' : 'log'](line, extra);
+  } else {
+    console[level === 'ERROR' ? 'error' : 'log'](line);
+  }
+};
+
 const isAuthenticated = (req, res, next) => {
   if (req.session && req.session.userId) {
     return next();
@@ -24,6 +34,7 @@ router.get('/', isAuthenticated, async (req, res) => {
     });
     res.json(monitors);
   } catch (error) {
+    log('ERROR', `Route error: ${error.message}`, error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -49,6 +60,7 @@ router.get('/:id', isAuthenticated, async (req, res) => {
     
     res.json(monitor);
   } catch (error) {
+    log('ERROR', `Route error: ${error.message}`, error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -83,6 +95,7 @@ router.post('/', isAuthenticated, async (req, res) => {
     
     res.status(201).json(monitor);
   } catch (error) {
+    log('ERROR', `Route error: ${error.message}`, error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -134,6 +147,7 @@ router.put('/:id', isAuthenticated, async (req, res) => {
     
     res.json(updatedMonitor);
   } catch (error) {
+    log('ERROR', `Route error: ${error.message}`, error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -153,6 +167,7 @@ router.delete('/:id', isAuthenticated, async (req, res) => {
     
     res.json({ message: 'Monitor excluÃ­do com sucesso' });
   } catch (error) {
+    log('ERROR', `Route error: ${error.message}`, error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -179,6 +194,7 @@ router.post('/:id/check', isAuthenticated, async (req, res) => {
     const result = await monitoringService.checkMonitor(monitor);
     res.json(result);
   } catch (error) {
+    log('ERROR', `Route error: ${error.message}`, error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -208,6 +224,7 @@ router.post('/check-all', isAuthenticated, async (req, res) => {
       count: monitors.length
     });
   } catch (error) {
+    log('ERROR', `Route error: ${error.message}`, error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -230,6 +247,7 @@ router.patch('/:id/toggle', isAuthenticated, async (req, res) => {
     
     res.json(monitor);
   } catch (error) {
+    log('ERROR', `Route error: ${error.message}`, error);
     res.status(500).json({ error: error.message });
   }
 });
